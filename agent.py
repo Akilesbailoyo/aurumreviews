@@ -11,6 +11,7 @@ import anthropic
 import google.generativeai as genai
 from groq import Groq
 from openai import OpenAI
+import publisher
 
 load_dotenv()
 
@@ -418,6 +419,7 @@ def run():
 
     init_db()
     ARTICLES_DIR.mkdir(exist_ok=True)
+    publisher.ensure_style()
 
     n = total()
     print(f"  📊 Total publicados: {n}")
@@ -442,6 +444,32 @@ def run():
             data     = generate_article(kw, nicho)
             markdown = to_markdown(data)
             save_local(data, markdown, nicho)
+
+            slug = data.get("slug", data["title"].lower().replace(" ", "-")[:60])
+            article_html = publisher.generate_html(data, markdown)
+            article_html_path = publisher.ARTICLES_DIR / f"{slug}.html"
+            article_html_path.write_text(article_html, encoding="utf-8")
+
+            all_articles = publisher.upsert_article_metadata(
+                {
+                    "slug": slug,
+                    "title": data.get("title", ""),
+                    "nicho": nicho,
+                    "winner_score": data.get("verdict", {}).get("score", "-"),
+                    "url": f"articles/{slug}.html",
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+            )
+            publisher.update_index(all_articles)
+            publisher.git_publish(
+                article_html_path,
+                f"Publish article: {data.get('title', slug)}",
+            )
+            publisher.git_publish(
+                publisher.DOCS_DIR / "index.html",
+                "Update docs index",
+            )
+
             url      = publish_hashnode(data, markdown, nicho)
             save_record(kw, nicho, data["title"], url or "")
             generados += 1
