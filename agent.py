@@ -77,19 +77,43 @@ def amazon_link(asin):
     return f"https://www.amazon.es/dp/{asin}?tag={AMAZON_TAG}"
 
 def amazon_image(asin):
-    return f"https://images-na.ssl-images-amazon.com/images/I/{asin}._AC_SL300_.jpg"
+    # Amazon image URLs usan un formato diferente, usamos placeholder por ahora
+    # Formato real sería: https://m.media-amazon.com/images/I/[IMAGE_ID].jpg
+    # donde [IMAGE_ID] no es el ASIN sino un ID de imagen específico
+    return f"https://via.placeholder.com/300x300.png?text=Amazon+Product"
+
+def validate_amazon_asin(asin):
+    """Valida si un ASIN existe en Amazon.es (básico)"""
+    try:
+        import requests
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        }
+        response = requests.head(f"https://www.amazon.es/dp/{asin}", headers=headers, timeout=5, allow_redirects=True)
+        return response.status_code == 200
+    except:
+        return False
 
 def get_products_for_keyword(keyword):
-    return [
-        {**p, "link": amazon_link(p["asin"]), "image": amazon_image(p["asin"])}
-        for p in PRODUCTS.get(keyword, [])
-    ]
+    products = PRODUCTS.get(keyword, [])
+    valid_products = []
+    
+    for p in products:
+        # Validar ASIN (opcional, puede ser lento)
+        # if validate_amazon_asin(p["asin"]):
+        valid_products.append({
+            **p, 
+            "link": amazon_link(p["asin"]), 
+            "image": amazon_image(p["asin"])
+        })
+    
+    return valid_products
 
 SKILLS_DIR            = Path("skills")
 
 PROVIDER_ORDER        = ["gemini", "groq", "claude", "openai"]
 DEFAULT_MODELS        = {
-    "gemini": "gemini-2.0-flash",
+    "gemini": "gemini-2.5-flash-lite",
     "claude": "claude-opus-4-5",
     "groq": "llama-3.3-70b-versatile",
     "openai": "gpt-4o-mini",
