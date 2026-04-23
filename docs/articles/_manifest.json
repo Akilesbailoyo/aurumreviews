@@ -1,13 +1,5 @@
 [
   {
-    "slug": "mejores-fondos-indexados-espana-2026",
-    "title": "Mejores Fondos Indexados en España 2026: Análisis y Comparativa",
-    "nicho": "finanzas",
-    "winner_score": "9.5/10",
-    "url": "articles/mejores-fondos-indexados-espana-2026.html",
-    "updated_at": "2026-04-23T08:38:50.076303"
-  },
-  {
     "slug": "broker-sin-comisiones-acciones",
     "title": "Mejor Broker Sin Comisiones para Comprar Acciones en 2024",
     "nicho": "finanzas",
@@ -38,5 +30,29 @@
     "winner_score": "9.2/10",
     "url": "articles/invertir-etf-principiante-espana.html",
     "updated_at": "2026-04-23T08:48:17.805881"
+  },
+  {
+    "slug": "mejores-fondos-indexados-espana-2026",
+    "title": "Mejores Fondos Indexados en España 2026: Análisis y Comparativa",
+    "nicho": "finanzas",
+    "winner_score": "9.2/10",
+    "url": "articles/mejores-fondos-indexados-espana-2026.html",
+    "updated_at": "2026-04-23T09:19:48.546083"
+  },
+  {
+    "slug": "robo-advisors-espana-comparativa",
+    "title": "Mejores Robo Advisors España 2024: Comparativa Detallada",
+    "nicho": "finanzas",
+    "winner_score": "9.2/10",
+    "url": "articles/robo-advisors-espana-comparativa.html",
+    "updated_at": "2026-04-23T09:19:58.606289"
+  },
+  {
+    "slug": "broker-acciones-sin-comisiones",
+    "title": "Mejor Broker Sin Comisiones para Comprar Acciones en 2024",
+    "nicho": "finanzas",
+    "winner_score": "9.2/10",
+    "url": "articles/broker-acciones-sin-comisiones.html",
+    "updated_at": "2026-04-23T09:20:09.868982"
   }
 ]
