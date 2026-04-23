@@ -3,7 +3,7 @@ Aurum Content Agent v3 — Hashnode Edition
 Publica automáticamente en Hashnode via GraphQL API
 """
 
-import os, sqlite3, json, time, re, unicodedata, requests
+import os, sqlite3, json, time, requests
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -21,14 +21,72 @@ GEMINI_API_KEY        = os.getenv("GEMINI_API_KEY")
 CLAUDE_API_KEY        = os.getenv("CLAUDE_API_KEY")
 GROQ_API_KEY          = os.getenv("GROQ_API_KEY")
 OPENAI_API_KEY        = os.getenv("OPENAI_API_KEY")
-HASHNODE_TOKEN        = os.getenv("HASHNODE_TOKEN")
-HASHNODE_PUB_ID       = os.getenv("HASHNODE_PUBLICATION_ID")
 TELEGRAM_TOKEN        = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID      = os.getenv("TELEGRAM_CHAT_ID")
 ARTICLES_DIR          = Path("articles")
 DB_PATH               = "aurum.db"
+AMAZON_TAG = os.getenv("AMAZON_TAG", "aurum099-21")
+
+PRODUCTS = {
+    "mejores brokers online España 2026": [
+        {"name": "El Inversor Inteligente", "asin": "8423426955", "price": "€18", "best_for": "inversión value", "score": "9.5"},
+        {"name": "Padre Rico Padre Pobre", "asin": "8466329390", "price": "€14", "best_for": "mentalidad financiera", "score": "8.8"},
+        {"name": "Un paso por delante de Wall Street", "asin": "8423413654", "price": "€16", "best_for": "bolsa principiantes", "score": "9.0"},
+    ],
+    "mejor portátil calidad precio 2026 menos 800 euros": [
+        {"name": "Acer Aspire 5 A515", "asin": "B0CLWXB7JY", "price": "€549", "best_for": "uso general y estudiantes", "score": "9.0"},
+        {"name": "Lenovo IdeaPad 3", "asin": "B09TQXHPZK", "price": "€479", "best_for": "presupuesto ajustado", "score": "8.5"},
+        {"name": "HP 15s-fq5065ns", "asin": "B0BW3TTKGM", "price": "€599", "best_for": "ofimática y multimedia", "score": "8.7"},
+    ],
+    "auriculares inalámbricos cancelación de ruido menos 100 euros": [
+        {"name": "Soundcore Q45", "asin": "B09BJKR2MH", "price": "€59", "best_for": "mejor calidad-precio", "score": "9.2"},
+        {"name": "JBL Tune 770NC", "asin": "B0BZSCY3GZ", "price": "€79", "best_for": "bajos potentes", "score": "8.9"},
+        {"name": "Edifier W820NB", "asin": "B09KC8FSJD", "price": "€69", "best_for": "diseño premium económico", "score": "8.7"},
+    ],
+    "mejor cochecito bebé calidad precio 2026": [
+        {"name": "Chicco Miinimo4", "asin": "B09ZQMG6ZP", "price": "€199", "best_for": "presupuesto ajustado", "score": "8.4"},
+        {"name": "Cybex Eezy S Twist+2", "asin": "B07WQHBMGK", "price": "€299", "best_for": "rotación 360°", "score": "8.8"},
+        {"name": "Bugaboo Butterfly", "asin": "B0B1Z7QXPK", "price": "€599", "best_for": "calidad premium ciudad", "score": "9.2"},
+    ],
+    "proteína whey mejor calidad precio España": [
+        {"name": "Myprotein Impact Whey 1kg", "asin": "B00INBGZGE", "price": "€34", "best_for": "mejor relación calidad-precio", "score": "9.3"},
+        {"name": "Optimum Nutrition Gold Standard 908g", "asin": "B000QSNYGI", "price": "€54", "best_for": "calidad premium", "score": "9.0"},
+        {"name": "Weider Premium Whey 500g", "asin": "B07X9QFKQZ", "price": "€22", "best_for": "iniciarse sin gastar mucho", "score": "8.5"},
+    ],
+    "mejor colchón para dolor de espalda 2026": [
+        {"name": "Emma Original 150x200cm", "asin": "B076ZKQF83", "price": "€399", "best_for": "posición mixta y espalda", "score": "9.2"},
+        {"name": "Pikolin New Vitalia 150x200", "asin": "B07RQGFXQB", "price": "€459", "best_for": "marca española clásica", "score": "8.9"},
+        {"name": "Dreamea Sport 150x200", "asin": "B07CZ6NBTX", "price": "€279", "best_for": "presupuesto ajustado", "score": "8.7"},
+    ],
+    "VPN más segura y rápida 2026": [
+        {"name": "NordVPN Tarjeta 1 año", "asin": "B07ZFQSV4K", "price": "€47", "best_for": "seguridad y velocidad", "score": "9.4"},
+        {"name": "Surfshark Tarjeta 1 año", "asin": "B08K4VDXJL", "price": "€35", "best_for": "dispositivos ilimitados", "score": "9.1"},
+    ],
+    "gestores de contraseñas más seguros 2026": [
+        {"name": "YubiKey 5 NFC", "asin": "B07HBD71HL", "price": "€54", "best_for": "máxima seguridad 2FA", "score": "9.5"},
+        {"name": "YubiKey 5C NFC", "asin": "B08DHL1YDL", "price": "€58", "best_for": "USB-C + NFC", "score": "9.3"},
+    ],
+    "smartwatch para monitorizar salud menos 200 euros": [
+        {"name": "Garmin Vívomove Sport", "asin": "B09SMQYVBK", "price": "€159", "best_for": "salud y estilo clásico", "score": "9.0"},
+        {"name": "Samsung Galaxy Watch6 40mm", "asin": "B0C6BRGWKQ", "price": "€189", "best_for": "usuarios Android", "score": "8.8"},
+        {"name": "Xiaomi Smart Band 8 Pro", "asin": "B0CJQQ3GGL", "price": "€59", "best_for": "presupuesto mínimo", "score": "8.4"},
+    ],
+}
+
+def amazon_link(asin):
+    return f"https://www.amazon.es/dp/{asin}?tag={AMAZON_TAG}"
+
+def amazon_image(asin):
+    return f"https://images-na.ssl-images-amazon.com/images/I/{asin}._AC_SL300_.jpg"
+
+def get_products_for_keyword(keyword):
+    return [
+        {**p, "link": amazon_link(p["asin"]), "image": amazon_image(p["asin"])}
+        for p in PRODUCTS.get(keyword, [])
+    ]
+
 SKILLS_DIR            = Path("skills")
-HASHNODE_API          = "https://gql.hashnode.com"
+
 PROVIDER_ORDER        = ["gemini", "groq", "claude", "openai"]
 DEFAULT_MODELS        = {
     "gemini": "gemini-2.0-flash",
@@ -77,13 +135,6 @@ KEYWORDS = {
         "app de meditación gratuita mejor valorada",
         "smartwatch para monitorizar salud menos 200 euros",
     ]
-}
-
-TAGS_MAP = {
-    "finanzas":        ["finanzas", "inversion", "ahorro", "españa", "dinero"],
-    "tecnologia":      ["tecnologia", "gadgets", "reviews", "compras"],
-    "bebes_y_crianza": ["bebes", "crianza", "maternidad", "familia"],
-    "bienestar":       ["salud", "bienestar", "fitness", "suplementos"],
 }
 
 # ── SKILLS ───────────────────────────────────────────────────────────────────
@@ -145,13 +196,8 @@ def notify(msg):
         except Exception as e:
             print(f"[Telegram error] {e}")
 
-def to_hashnode_slug(text):
-    normalized = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
-    slug = re.sub(r"[^a-z0-9]+", "-", normalized.lower()).strip("-")
-    return slug[:250] if slug else "tag"
-
 # ── GENERACIÓN ────────────────────────────────────────────────────────────────
-def generate_article(keyword, nicho):
+def generate_article(keyword, nicho, products=None):
     print(f"  ✍️  Generando: '{keyword}'")
 
     skills_names = ["content", "seo"]
@@ -159,6 +205,14 @@ def generate_article(keyword, nicho):
         skills_names.append("parenting")
 
     skills_ctx = load_skills(*skills_names)
+
+    products_info = ""
+    if products:
+        products_info = "\n\nPRODUCTOS REALES EN AMAZON.ES (inclúyelos en tu análisis):\n"
+        products_info += "\n".join(
+            f"- {p['name']} | {p['price']} | Ideal para: {p['best_for']} | Score: {p['score']}"
+            for p in products
+        )
 
     system = f"""Eres el equipo editorial de AURUM, publicación experta en recomendaciones de producto.
 Principios inamovibles:
@@ -207,7 +261,7 @@ Devuelve este JSON exacto:
     {{"q":"¿Con qué frecuencia actualizáis este análisis?","a":"Mensualmente."}}
   ],
   "affiliate_products": ["producto1","producto2"]
-}}"""
+}}{products_info}"""
 
     raw = llm_generate(system, prompt)
     return _extract_json(raw)
@@ -345,61 +399,6 @@ def to_markdown(data):
 
     return "".join(lines)
 
-# ── PUBLICAR EN HASHNODE ──────────────────────────────────────────────────────
-def publish_hashnode(data, markdown, nicho):
-    if not HASHNODE_TOKEN or not HASHNODE_PUB_ID:
-        print("  ⚠️  Sin HASHNODE_TOKEN o HASHNODE_PUBLICATION_ID — solo guardado local")
-        return None
-
-    tags = [{"name": t, "slug": to_hashnode_slug(t)} for t in TAGS_MAP.get(nicho, ["recomendaciones"])]
-
-    mutation = """
-    mutation PublishPost($input: PublishPostInput!) {
-      publishPost(input: $input) {
-        post {
-          id
-          url
-          title
-        }
-      }
-    }
-    """
-
-    variables = {
-        "input": {
-            "title": data["title"],
-            "subtitle": data.get("subtitle", ""),
-            "publicationId": HASHNODE_PUB_ID,
-            "contentMarkdown": markdown,
-            "slug": data.get("slug", ""),
-            "tags": tags,
-            "metaTags": {
-                "title": data["title"],
-                "description": data.get("meta_description", ""),
-            },
-            "publishedAt": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        }
-    }
-
-    resp = requests.post(
-        HASHNODE_API,
-        json={"query": mutation, "variables": variables},
-        headers={
-            "Authorization": HASHNODE_TOKEN,
-            "Content-Type": "application/json"
-        },
-        timeout=20
-    )
-
-    result = resp.json()
-    if "errors" in result:
-        print(f"  ❌ Hashnode error: {result['errors']}")
-        return None
-
-    url = result["data"]["publishPost"]["post"]["url"]
-    print(f"  ✅ Publicado: {url}")
-    return url
-
 # ── GUARDAR LOCAL ─────────────────────────────────────────────────────────────
 def save_local(data, markdown, nicho):
     d = ARTICLES_DIR / nicho
@@ -441,12 +440,13 @@ def run():
     for nicho, kw in pending[:3]:
         print(f"{'─'*40}")
         try:
-            data     = generate_article(kw, nicho)
+            products = get_products_for_keyword(kw)
+            data     = generate_article(kw, nicho, products)
             markdown = to_markdown(data)
             save_local(data, markdown, nicho)
 
             slug = data.get("slug", data["title"].lower().replace(" ", "-")[:60])
-            article_html = publisher.generate_html(data, markdown)
+            article_html = publisher.generate_html(data, markdown, products)
             article_html_path = publisher.ARTICLES_DIR / f"{slug}.html"
             article_html_path.write_text(article_html, encoding="utf-8")
 
@@ -470,8 +470,8 @@ def run():
                 "Update docs index",
             )
 
-            url      = publish_hashnode(data, markdown, nicho)
-            save_record(kw, nicho, data["title"], url or "")
+            url = f"{os.getenv('SITE_URL', '')}/articles/{slug}.html"
+            save_record(kw, nicho, data["title"], url)
             generados += 1
             time.sleep(3)
         except json.JSONDecodeError as e:

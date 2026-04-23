@@ -90,8 +90,41 @@ def _render_faq(faq_items):
         blocks.append(f"<details class='faq-item'><summary>{q}</summary><p>{a}</p></details>")
     return "\n".join(blocks)
 
+def _render_product_cards(products, winner):
+    if not products:
+        return ""
+    cards = []
+    for p in products:
+        name = escape(p.get("name", ""))
+        price = escape(p.get("price", ""))
+        best_for = escape(p.get("best_for", ""))
+        score = escape(p.get("score", ""))
+        link = escape(p.get("link", "#"))
+        image = escape(p.get("image", ""))
+        is_winner = p.get("name") == winner
+        border = "border:2px solid var(--accent);" if is_winner else "border:1px solid var(--border);"
+        bg = "background:#1a1610;" if is_winner else "background:var(--panel);"
+        badge = "<span class='winner-badge'>MEJOR OPCIÓN</span>" if is_winner else ""
+        cards.append(f"""
+<div class='product-card' style='{border}{bg}'>
+  <img src='{image}' alt='{name}' class='product-img' onerror='this.style.display="none"'>
+  <div class='product-info'>
+    <div class='product-name'>{name} {badge}</div>
+    <div class='product-meta'>
+      <span class='product-score'>{score}</span>
+      <span class='product-price'>{price}</span>
+      <span class='product-best'>Ideal para: {best_for}</span>
+    </div>
+    <a href='{link}' class='amazon-btn' target='_blank' rel='noopener sponsored'>
+      Ver en Amazon →
+    </a>
+  </div>
+</div>""")
+    disclaimer = "<p class='affiliate-disclaimer'>* Enlaces de afiliado Amazon.es. Si compras a través de ellos recibimos una pequeña comisión sin coste adicional para ti. Nunca afecta nuestras recomendaciones.</p>"
+    return "<div class='product-cards'>" + "\n".join(cards) + "</div>" + disclaimer
 
-def generate_html(article_data, markdown_content):
+
+def generate_html(article_data, markdown_content, products=None):
     _ensure_paths()
     verdict = article_data.get("verdict", {})
     winner = verdict.get("winner", "")
@@ -108,6 +141,7 @@ def generate_html(article_data, markdown_content):
 
     article_schema = json.dumps(_article_schema(article_data, article_url), ensure_ascii=False)
     faq_schema = json.dumps(_faq_schema(faq_items), ensure_ascii=False)
+    product_cards_html = _render_product_cards(products or [], winner)
 
     return f"""<!doctype html>
 <html lang="es">
@@ -158,6 +192,10 @@ def generate_html(article_data, markdown_content):
             </tbody>
           </table>
         </div>
+      </section>
+      <section class="article-section">
+        <h2>Dónde comprar</h2>
+        {product_cards_html}
       </section>
       {_render_sections(article_data.get("sections", []))}
       <section class="article-section">
@@ -373,6 +411,70 @@ th{background:#18140f;color:var(--accent)}
 .sr-only{display:none}
 @media (max-width: 768px){
   .hero h1,.article-card h1{font-size:40px}
+}
+.product-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0;
+}
+.product-card {
+  display: flex;
+  gap: 16px;
+  border-radius: 12px;
+  padding: 16px;
+  align-items: flex-start;
+}
+.product-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.product-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.product-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.product-score { color: var(--accent); font-weight: 700; }
+.amazon-btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #0c0c0c;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-decoration: none;
+  width: fit-content;
+}
+.amazon-btn:hover { opacity: 0.85; }
+.affiliate-disclaimer {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 8px;
 }
 """
     STYLE_PATH.write_text(css.strip() + "\n", encoding="utf-8")
