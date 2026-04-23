@@ -1,0 +1,27 @@
+---
+description: Project-specific guardrails for Aurum agent changes. Use when modifying agent.py, prompt templates, publishing flow, or content generation behavior.
+alwaysApply: true
+---
+
+# Aurum style rules
+
+## Scope discipline
+- Change only what the user asked.
+- Keep business flow unchanged unless explicitly requested.
+- Avoid touching keywords, DB schema, publishing behavior, or content formatting when task is LLM-layer only.
+
+## LLM integration
+- Route all model calls through one abstraction layer.
+- Do not hardcode provider-specific logic inside article/domain logic.
+- Prefer provider config from `.env` over inline constants.
+- Keep fallback behavior explicit and visible in logs.
+
+## Reliability
+- Preserve current error handling behavior unless task requests otherwise.
+- Validate generated JSON before downstream usage.
+- Print actionable warnings when provider/model fails or falls back.
+
+## Editing safety
+- Do not rewrite existing prompts unless asked.
+- Do not remove unrelated code during refactors.
+- Keep file edits minimal and surgical.

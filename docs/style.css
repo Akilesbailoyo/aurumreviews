@@ -1,0 +1,11 @@
+:root{
+  --bg:#0c0c0c;
+  --panel:#131313;
+  --text:#f0ebe0;
+  --muted:#c8bea8;
+  --accent:#d4a853;
+  --border:#2c2417;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+h1,h2,h3,.logo{font-family:'Cormorant Garamond',serif}
