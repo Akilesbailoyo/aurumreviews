@@ -437,52 +437,79 @@ def run():
     print(f"  📋 Pendientes: {len(pending)}\n")
     generados = errores = 0
 
-    for nicho, kw in pending[:3]:
-        print(f"{'─'*40}")
-        try:
-            products = get_products_for_keyword(kw)
-            data     = generate_article(kw, nicho, products)
-            markdown = to_markdown(data)
-            save_local(data, markdown, nicho)
+    # Rotar entre categorías para más variedad
+    # Agrupar pendientes por nicho
+    nichos_pendientes = {}
+    for nicho, kw in pending:
+        if nicho not in nichos_pendientes:
+            nichos_pendientes[nicho] = []
+        nichos_pendientes[nicho].append((nicho, kw))
+    
+    # Procesar hasta 10 artículos por ciclo, rotando entre nichos
+    max_articulos = 10
+    procesados = 0
+    nicho_index = 0
+    nichos_list = list(nichos_pendientes.keys())
+    
+    while procesados < max_articulos and nicho_index < len(nichos_list):
+        nicho_actual = nichos_list[nicho_index]
+        if nichos_pendientes[nicho_actual]:
+            nicho, kw = nichos_pendientes[nicho_actual].pop(0)
+            print(f"{'─'*40}")
+            try:
+                products = get_products_for_keyword(kw)
+                data     = generate_article(kw, nicho, products)
+                markdown = to_markdown(data)
+                save_local(data, markdown, nicho)
 
-            slug = data.get("slug", data["title"].lower().replace(" ", "-")[:60])
-            article_html = publisher.generate_html(data, markdown, products)
-            article_html_path = publisher.ARTICLES_DIR / f"{slug}.html"
-            article_html_path.write_text(article_html, encoding="utf-8")
+                slug = data.get("slug", data["title"].lower().replace(" ", "-")[:60])
+                article_html = publisher.generate_html(data, markdown, products)
+                article_html_path = publisher.ARTICLES_DIR / f"{slug}.html"
+                article_html_path.write_text(article_html, encoding="utf-8")
 
-            all_articles = publisher.upsert_article_metadata(
-                {
-                    "slug": slug,
-                    "title": data.get("title", ""),
-                    "nicho": nicho,
-                    "winner_score": data.get("verdict", {}).get("score", "-"),
-                    "url": f"articles/{slug}.html",
-                    "updated_at": datetime.utcnow().isoformat(),
-                }
-            )
-            publisher.update_index(all_articles)
-            publisher.git_publish(
-                article_html_path,
-                f"Publish article: {data.get('title', slug)}",
-            )
-            publisher.git_publish(
-                publisher.DOCS_DIR / "index.html",
-                "Update docs index",
-            )
+                all_articles = publisher.upsert_article_metadata(
+                    {
+                        "slug": slug,
+                        "title": data.get("title", ""),
+                        "nicho": nicho,
+                        "winner_score": data.get("verdict", {}).get("score", "-"),
+                        "url": f"articles/{slug}.html",
+                        "updated_at": datetime.utcnow().isoformat(),
+                    }
+                )
+                publisher.update_index(all_articles)
+                publisher.git_publish(
+                    article_html_path,
+                    f"Publish article: {data.get('title', slug)}",
+                )
+                publisher.git_publish(
+                    publisher.DOCS_DIR / "index.html",
+                    "Update docs index",
+                )
 
-            url = f"{os.getenv('SITE_URL', '')}/articles/{slug}.html"
-            save_record(kw, nicho, data["title"], url)
-            generados += 1
-            time.sleep(3)
-        except json.JSONDecodeError as e:
-            print(f"  ❌ JSON error '{kw}': {e}")
-            errores += 1
-        except Exception as e:
-            print(f"  ❌ Error '{kw}': {e}")
-            errores += 1
-            if errores >= 3:
-                notify(f"⚠️ 3 errores seguidos.\n`{str(e)[:200]}`")
-                break
+                url = f"{os.getenv('SITE_URL', '')}/articles/{slug}.html"
+                save_record(kw, nicho, data["title"], url)
+                generados += 1
+                procesados += 1
+                time.sleep(3)
+            except json.JSONDecodeError as e:
+                print(f"  ❌ JSON error '{kw}': {e}")
+                errores += 1
+                procesados += 1
+            except Exception as e:
+                print(f"  ❌ Error '{kw}': {e}")
+                errores += 1
+                procesados += 1
+                if errores >= 3:
+                    notify(f"⚠️ 3 errores seguidos.\n`{str(e)[:200]}`")
+                    break
+        
+        # Pasar al siguiente nicho (rotación)
+        nicho_index = (nicho_index + 1) % len(nichos_list)
+        
+        # Si todos los nichos están vacíos, salir
+        if all(not items for items in nichos_pendientes.values()):
+            break
 
     notify(
         f"✅ *Ciclo completado*\n"
