@@ -3,16 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AURUM</title>
+  <title>AURUM | Recomendaciones premium</title>
+  <meta name="description" content="Comparativas premium de AURUM: finanzas, tecnología, bebés y bienestar." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <header class="site-header"><span class="logo">AURUM</span></header>
+  <header class="site-header">
+    <span class="logo">AURUM</span>
+  </header>
   <main class="index-wrap">
     <section class="hero">
+      <p class="eyebrow">Análisis independiente</p>
       <h1>Decisiones de compra más inteligentes.</h1>
-      <p>Comparativas premium en construcción.</p>
+      <p>Comparativas y veredictos claros con enfoque editorial premium.</p>
+    </section>
+    <section class="filters">
+      <button class="filter-btn active" data-filter="all">Todos</button>
+      <button class="filter-btn" data-filter="finanzas">Finanzas</button>
+      <button class="filter-btn" data-filter="tecnologia">Tecnología</button>
+      <button class="filter-btn" data-filter="bebes_y_crianza">Bebés</button>
+      <button class="filter-btn" data-filter="bienestar">Bienestar</button>
+    </section>
+    <section class="article-grid">
+      <a class='article-item' data-category='finanzas' href='articles/mejores-brokers-online-espana-2026.html'><p class='article-nicho'>finanzas</p><h3>Mejores Brokers Online España 2026: Análisis y Comparativa</h3><p class='article-score'>Score ganador: 9.5/10</p></a>
     </section>
   </main>
+  <footer class="site-footer">Actualizado: April 2026</footer>
+  <script>
+    const buttons = document.querySelectorAll(".filter-btn");
+    const cards = document.querySelectorAll(".article-item");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const filter = btn.dataset.filter;
+        cards.forEach((card) => {
+          const show = filter === "all" || card.dataset.category === filter;
+          card.style.display = show ? "block" : "none";
+        });
+      });
+    });
+  </script>
 </body>
 </html>
